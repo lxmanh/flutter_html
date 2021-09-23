@@ -51,6 +51,8 @@ class Html extends StatelessWidget {
     Key? key,
     GlobalKey? anchorKey,
     required this.data,
+    this.headers,
+    this.domains,
     this.onLinkTap,
     this.onAnchorTap,
     this.customRender = const {},
@@ -72,6 +74,8 @@ class Html extends StatelessWidget {
     Key? key,
     GlobalKey? anchorKey,
     @required this.document,
+    this.headers,
+    this.domains,
     this.onLinkTap,
     this.onAnchorTap,
     this.customRender = const {},
@@ -88,6 +92,12 @@ class Html extends StatelessWidget {
         assert(document != null),
         _anchorKey = anchorKey ?? GlobalKey(),
         super(key: key);
+
+  /// Headers request for link such as Image or Audio, Video required
+  final Map<String, String>? headers;
+
+  /// List of domains will apply headers
+  final List<String>? domains;
 
   /// A unique key for this Html widget to ensure uniqueness of anchors
   final GlobalKey _anchorKey;
@@ -159,6 +169,8 @@ class Html extends StatelessWidget {
       child: HtmlParser(
         key: _anchorKey,
         htmlData: doc,
+        headers: headers,
+        domains: domains,
         onLinkTap: onLinkTap,
         onAnchorTap: onAnchorTap,
         onImageTap: onImageTap,
@@ -211,34 +223,34 @@ class SelectableHtml extends StatelessWidget {
   /// (e.g. bold or italic), while container related styling (e.g. borders or padding/margin)
   /// do not work because we can't use the `ContainerSpan` class (it needs an enclosing `WidgetSpan`).
 
-  SelectableHtml({
-    Key? key,
-    GlobalKey? anchorKey,
-    required this.data,
-    this.onLinkTap,
-    this.onAnchorTap,
-    this.onCssParseError,
-    this.shrinkWrap = false,
-    this.style = const {},
-    this.tagsList = const [],
-    this.selectionControls
-  }) : document = null,
+  SelectableHtml(
+      {Key? key,
+      GlobalKey? anchorKey,
+      required this.data,
+      this.onLinkTap,
+      this.onAnchorTap,
+      this.onCssParseError,
+      this.shrinkWrap = false,
+      this.style = const {},
+      this.tagsList = const [],
+      this.selectionControls})
+      : document = null,
         assert(data != null),
         _anchorKey = anchorKey ?? GlobalKey(),
         super(key: key);
 
-  SelectableHtml.fromDom({
-    Key? key,
-    GlobalKey? anchorKey,
-    required this.document,
-    this.onLinkTap,
-    this.onAnchorTap,
-    this.onCssParseError,
-    this.shrinkWrap = false,
-    this.style = const {},
-    this.tagsList = const [],
-    this.selectionControls
-  }) : data = null,
+  SelectableHtml.fromDom(
+      {Key? key,
+      GlobalKey? anchorKey,
+      required this.document,
+      this.onLinkTap,
+      this.onAnchorTap,
+      this.onCssParseError,
+      this.shrinkWrap = false,
+      this.style = const {},
+      this.tagsList = const [],
+      this.selectionControls})
+      : data = null,
         assert(document != null),
         _anchorKey = anchorKey ?? GlobalKey(),
         super(key: key);
@@ -280,7 +292,8 @@ class SelectableHtml extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dom.Document doc = data != null ? HtmlParser.parseHTML(data!) : document!;
+    final dom.Document doc =
+        data != null ? HtmlParser.parseHTML(data!) : document!;
     final double? width = shrinkWrap ? null : MediaQuery.of(context).size.width;
 
     return Container(
