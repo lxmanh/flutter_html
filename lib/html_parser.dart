@@ -20,6 +20,8 @@ import 'package:html/parser.dart' as htmlparser;
 import 'package:numerus/numerus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'src/media_request_options.dart';
+
 typedef OnTap = void Function(
   String? url,
   RenderContext context,
@@ -60,11 +62,7 @@ class HtmlParser extends StatelessWidget {
   final OnTap? _onAnchorTap;
   final TextSelectionControls? selectionControls;
 
-  /// Headers request for link such as Image or Audio, Video required
-  final Map<String, String>? headers;
-
-  /// List of domains will apply headers
-  final List<String>? domains;
+  final MediaRequestOptions? mediaRequestOptions;
 
   HtmlParser({
     required this.key,
@@ -83,8 +81,7 @@ class HtmlParser extends StatelessWidget {
     required this.tagsList,
     required this.navigationDelegateForIframe,
     this.selectionControls,
-    this.headers,
-    this.domains,
+    this.mediaRequestOptions,
   })  : this._onAnchorTap = onAnchorTap != null
             ? onAnchorTap
             : key != null
@@ -103,6 +100,7 @@ class HtmlParser extends StatelessWidget {
       tagsList,
       navigationDelegateForIframe,
       context,
+      mediaRequestOptions
     );
     StyledElement? externalCssStyledTree;
     if (declarations.isNotEmpty) {
@@ -167,12 +165,12 @@ class HtmlParser extends StatelessWidget {
 
   /// [lexDomTree] converts a DOM document to a simplified tree of [StyledElement]s.
   static StyledElement lexDomTree(
-    dom.Document html,
-    List<String> customRenderTags,
-    List<String> tagsList,
-    NavigationDelegate? navigationDelegateForIframe,
-    BuildContext context,
-  ) {
+      dom.Document html,
+      List<String> customRenderTags,
+      List<String> tagsList,
+      NavigationDelegate? navigationDelegateForIframe,
+      BuildContext context,
+      MediaRequestOptions? mediaRequestOptions) {
     StyledElement tree = StyledElement(
       name: "[Tree Root]",
       children: <StyledElement>[],
@@ -181,12 +179,8 @@ class HtmlParser extends StatelessWidget {
     );
 
     html.nodes.forEach((node) {
-      tree.children.add(_recursiveLexer(
-        node,
-        customRenderTags,
-        tagsList,
-        navigationDelegateForIframe,
-      ));
+      tree.children.add(_recursiveLexer(node, customRenderTags, tagsList,
+          navigationDelegateForIframe, mediaRequestOptions));
     });
 
     return tree;
@@ -197,20 +191,16 @@ class HtmlParser extends StatelessWidget {
   /// It runs the parse functions of every type of
   /// element and returns a [StyledElement] tree representing the element.
   static StyledElement _recursiveLexer(
-    dom.Node node,
-    List<String> customRenderTags,
-    List<String> tagsList,
-    NavigationDelegate? navigationDelegateForIframe,
-  ) {
+      dom.Node node,
+      List<String> customRenderTags,
+      List<String> tagsList,
+      NavigationDelegate? navigationDelegateForIframe,
+      MediaRequestOptions? mediaRequestOptions) {
     List<StyledElement> children = <StyledElement>[];
 
     node.nodes.forEach((childNode) {
-      children.add(_recursiveLexer(
-        childNode,
-        customRenderTags,
-        tagsList,
-        navigationDelegateForIframe,
-      ));
+      children.add(_recursiveLexer(childNode, customRenderTags, tagsList,
+          navigationDelegateForIframe, mediaRequestOptions));
     });
 
     //TODO(Sub6Resources): There's probably a more efficient way to look this up.
@@ -223,7 +213,8 @@ class HtmlParser extends StatelessWidget {
       } else if (INTERACTABLE_ELEMENTS.contains(node.localName)) {
         return parseInteractableElement(node, children);
       } else if (REPLACED_ELEMENTS.contains(node.localName)) {
-        return parseReplacedElement(node, navigationDelegateForIframe);
+        return parseReplacedElement(
+            node, navigationDelegateForIframe, mediaRequestOptions);
       } else if (LAYOUT_ELEMENTS.contains(node.localName)) {
         return parseLayoutElement(node, children);
       } else if (TABLE_CELL_ELEMENTS.contains(node.localName)) {

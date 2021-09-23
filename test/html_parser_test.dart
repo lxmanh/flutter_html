@@ -18,7 +18,8 @@ void main() {
       ),
     );
   });
-  testWidgets('Test new parser (hacky workaround to get BuildContext)', (WidgetTester tester) async {
+  testWidgets('Test new parser (hacky workaround to get BuildContext)',
+      (WidgetTester tester) async {
     await tester.pumpWidget(
       Builder(
         builder: (BuildContext context) {
@@ -36,54 +37,52 @@ void testNewParser(BuildContext context) {
   HtmlParser.parseHTML("<b>Hello, World!</b>");
 
   StyledElement tree = HtmlParser.lexDomTree(
-    HtmlParser.parseHTML(
-        "Hello! <b>Hello, World!</b><i>Hello, New World!</i>"),
-    [],
-    [],
-    null,
-    context,
-  );
+      HtmlParser.parseHTML(
+          "Hello! <b>Hello, World!</b><i>Hello, New World!</i>"),
+      [],
+      [],
+      null,
+      context,
+      null);
   print(tree.toString());
 
   tree = HtmlParser.lexDomTree(
-    HtmlParser.parseHTML(
-        "Hello, World! <a href='https://example.com'>This is a link</a>"),
-    [],
-    [],
-    null,
-    context,
-  );
+      HtmlParser.parseHTML(
+          "Hello, World! <a href='https://example.com'>This is a link</a>"),
+      [],
+      [],
+      null,
+      context,
+      null);
   print(tree.toString());
 
   tree = HtmlParser.lexDomTree(
-    HtmlParser.parseHTML("<img src='https://image.example.com' />"),
-    [],
-    [],
-    null,
-    context,
-  );
+      HtmlParser.parseHTML("<img src='https://image.example.com' />"),
+      [],
+      [],
+      null,
+      context,
+      null);
   print(tree.toString());
 
   tree = HtmlParser.lexDomTree(
-    HtmlParser.parseHTML(
-        "<div><div><div><div><a href='link'>Link</a><div>Hello, World! <b>Bold and <i>Italic</i></b></div></div></div></div></div>"),
-    [],
-    [],
-    null,
-    context,
-  );
+      HtmlParser.parseHTML(
+          "<div><div><div><div><a href='link'>Link</a><div>Hello, World! <b>Bold and <i>Italic</i></b></div></div></div></div></div>"),
+      [],
+      [],
+      null,
+      context,
+      null);
   print(tree.toString());
 
-  ReplacedElement videoContentElement = parseReplacedElement(
-    HtmlParser.parseHTML("""
+  ReplacedElement videoContentElement =
+      parseReplacedElement(HtmlParser.parseHTML("""
       <video width="320" height="240" controls>
        <source src="movie.mp4" type="video/mp4">
        <source src="movie.ogg" type="video/ogg">
        Your browser does not support the video tag.
       </video>
-    """).getElementsByTagName("video")[0],
-    null,
-  );
+    """).getElementsByTagName("video")[0], null, null);
 
   expect(videoContentElement, isA<VideoContentElement>());
   if (videoContentElement is VideoContentElement) {
@@ -93,16 +92,14 @@ void testNewParser(BuildContext context) {
         reason: "Not enough sources...");
   }
 
-  ReplacedElement audioContentElement = parseReplacedElement(
-    HtmlParser.parseHTML("""
+  ReplacedElement audioContentElement =
+      parseReplacedElement(HtmlParser.parseHTML("""
       <audio controls>
         <source src='audio.mp3' type='audio/mpeg'>
         <source src='audio.wav' type='audio/wav'>
         Your browser does not support the audio tag.
       </audio>
-    """).getElementsByTagName("audio")[0],
-    null,
-  );
+    """).getElementsByTagName("audio")[0], null, null);
   expect(audioContentElement, isA<AudioContentElement>());
   if (audioContentElement is AudioContentElement) {
     expect(audioContentElement.showControls, equals(true),

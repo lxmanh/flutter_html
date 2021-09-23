@@ -9,6 +9,8 @@ import 'package:flutter_html/style.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'src/media_request_options.dart';
+
 //export render context api
 export 'package:flutter_html/html_parser.dart';
 export 'package:flutter_html/image_render.dart';
@@ -51,8 +53,7 @@ class Html extends StatelessWidget {
     Key? key,
     GlobalKey? anchorKey,
     required this.data,
-    this.headers,
-    this.domains,
+    this.mediaRequestOptions,
     this.onLinkTap,
     this.onAnchorTap,
     this.customRender = const {},
@@ -74,8 +75,7 @@ class Html extends StatelessWidget {
     Key? key,
     GlobalKey? anchorKey,
     @required this.document,
-    this.headers,
-    this.domains,
+    this.mediaRequestOptions,
     this.onLinkTap,
     this.onAnchorTap,
     this.customRender = const {},
@@ -94,10 +94,7 @@ class Html extends StatelessWidget {
         super(key: key);
 
   /// Headers request for link such as Image or Audio, Video required
-  final Map<String, String>? headers;
-
-  /// List of domains will apply headers
-  final List<String>? domains;
+  final MediaRequestOptions? mediaRequestOptions;
 
   /// A unique key for this Html widget to ensure uniqueness of anchors
   final GlobalKey _anchorKey;
@@ -169,8 +166,7 @@ class Html extends StatelessWidget {
       child: HtmlParser(
         key: _anchorKey,
         htmlData: doc,
-        headers: headers,
-        domains: domains,
+        mediaRequestOptions: mediaRequestOptions,
         onLinkTap: onLinkTap,
         onAnchorTap: onAnchorTap,
         onImageTap: onImageTap,

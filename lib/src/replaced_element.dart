@@ -18,6 +18,8 @@ import 'package:html/dom.dart' as dom;
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'media_request_options.dart';
+
 /// A [ReplacedElement] is a type of [StyledElement] that does not require its [children] to be rendered.
 ///
 /// A [ReplacedElement] may use its children nodes to determine relevant information
@@ -139,6 +141,7 @@ class AudioContentElement extends ReplacedElement {
   final bool muted;
   final Map<String, String>? headers;
   final List<String>? domains;
+  final String Function(String?)? mapUrl;
 
   AudioContentElement({
     required String name,
@@ -147,6 +150,7 @@ class AudioContentElement extends ReplacedElement {
     required this.autoplay,
     required this.loop,
     required this.muted,
+    this.mapUrl,
     this.headers,
     this.domains,
     required dom.Element node,
@@ -154,6 +158,7 @@ class AudioContentElement extends ReplacedElement {
 
   @override
   Widget toWidget(RenderContext context) {
+    final String? _src = mapUrl?.call(src.first) ?? src.first!;
     return Container(
       key: AnchorKey.of(context.parser.key, this),
       width: context.style.width ?? 300,
@@ -162,11 +167,11 @@ class AudioContentElement extends ReplacedElement {
           : 75,
       child: ChewieAudio(
         controller: ChewieAudioController(
-          videoPlayerController: networkMediaSourceMatcher(
-                  domains: this.domains, srcValue: src.first)
-              ? VideoPlayerController.network(src.first ?? "",
-                  httpHeaders: this.headers ?? Map<String, String>())
-              : VideoPlayerController.network(src.first ?? ""),
+          videoPlayerController:
+              networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+                  ? VideoPlayerController.network(_src ?? "",
+                      httpHeaders: this.headers ?? Map<String, String>())
+                  : VideoPlayerController.network(_src ?? ""),
           autoPlay: autoplay,
           looping: loop,
           showControls: showControls,
@@ -189,6 +194,7 @@ class VideoContentElement extends ReplacedElement {
   final double? height;
   final Map<String, String>? headers;
   final List<String>? domains;
+  final String Function(String?)? mapUrl;
 
   VideoContentElement({
     required String name,
@@ -200,6 +206,7 @@ class VideoContentElement extends ReplacedElement {
     required this.muted,
     required this.width,
     required this.height,
+    this.mapUrl,
     this.headers,
     this.domains,
     required dom.Element node,
@@ -207,6 +214,7 @@ class VideoContentElement extends ReplacedElement {
 
   @override
   Widget toWidget(RenderContext context) {
+    final String? _src = mapUrl?.call(src.first) ?? src.first!;
     final double _width = width ?? (height ?? 150) * 2;
     final double _height = height ?? (width ?? 300) / 2;
     return AspectRatio(
@@ -215,11 +223,11 @@ class VideoContentElement extends ReplacedElement {
         key: AnchorKey.of(context.parser.key, this),
         child: Chewie(
           controller: ChewieController(
-            videoPlayerController: networkMediaSourceMatcher(
-                    domains: this.domains, srcValue: src.first)
-                ? VideoPlayerController.network(src.first ?? "",
-                    httpHeaders: this.headers ?? Map<String, String>())
-                : VideoPlayerController.network(src.first ?? ""),
+            videoPlayerController:
+                networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+                    ? VideoPlayerController.network(_src ?? "",
+                        httpHeaders: this.headers ?? Map<String, String>())
+                    : VideoPlayerController.network(_src ?? ""),
             placeholder: poster != null
                 ? Image.network(poster!)
                 : Container(color: Colors.black),
@@ -428,6 +436,7 @@ class MathElement extends ReplacedElement {
 ReplacedElement parseReplacedElement(
   dom.Element element,
   NavigationDelegate? navigationDelegateForIframe,
+  MediaRequestOptions? options,
 ) {
   switch (element.localName) {
     case "audio":
@@ -446,6 +455,9 @@ ReplacedElement parseReplacedElement(
         autoplay: element.attributes['autoplay'] != null,
         muted: element.attributes['muted'] != null,
         node: element,
+        domains: options?.domains,
+        headers: options?.headers,
+        mapUrl: options?.mapUrl,
       );
     case "br":
       return TextContentElement(
@@ -488,6 +500,9 @@ ReplacedElement parseReplacedElement(
         width: double.tryParse(element.attributes['width'] ?? ""),
         height: double.tryParse(element.attributes['height'] ?? ""),
         node: element,
+        domains: options?.domains,
+        headers: options?.headers,
+        mapUrl: options?.mapUrl,
       );
     case "svg":
       return SvgContentElement(
