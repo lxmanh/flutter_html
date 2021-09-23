@@ -22,6 +22,7 @@ export 'package:flutter_html/src/replaced_element.dart';
 export 'package:flutter_html/src/styled_element.dart';
 //export style api
 export 'package:flutter_html/style.dart';
+export 'package:flutter_html/src/media_request_options.dart';
 
 class Html extends StatelessWidget {
   /// The `Html` widget takes HTML as input and displays a RichText
