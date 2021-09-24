@@ -145,7 +145,7 @@ class AudioContentElement extends ReplacedElement {
   final List<String>? domains;
   final String Function(String?)? mapUrl;
 
-  late ChewieAudioController _chewieAudioController;
+  late ChewieAudioController? _chewieAudioController;
   late String _src;
 
   AudioContentElement({
@@ -160,18 +160,22 @@ class AudioContentElement extends ReplacedElement {
     this.domains,
     required dom.Element node,
   }) : super(name: name, style: Style(), node: node, elementId: node.id) {
-    _src = mapUrl?.call(src.first) ?? src.first!;
-    _chewieAudioController = ChewieAudioController(
-      videoPlayerController:
-          networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
-              ? VideoPlayerController.network(_src,
-                  httpHeaders: this.headers ?? Map<String, String>())
-              : VideoPlayerController.network(_src),
-      autoPlay: autoplay,
-      looping: loop,
-      showControls: showControls,
-      autoInitialize: true,
-    );
+    try {
+      _src = mapUrl?.call(src.first) ?? src.first!;
+      _chewieAudioController = ChewieAudioController(
+        videoPlayerController:
+            networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+                ? VideoPlayerController.network(_src,
+                    httpHeaders: this.headers ?? Map<String, String>())
+                : VideoPlayerController.network(_src),
+        autoPlay: autoplay,
+        looping: loop,
+        showControls: showControls,
+        autoInitialize: true,
+      );
+    } catch (e) {
+      debugPrint('AudioContentElement throw error : $e.');
+    }
   }
 
   @override
@@ -183,19 +187,21 @@ class AudioContentElement extends ReplacedElement {
       onVisibilityChanged: (visibilityInfo) {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose audio widget ${visibilityInfo.key}.');
-          _chewieAudioController.videoPlayerController.dispose();
-          _chewieAudioController.dispose();
+          _chewieAudioController?.videoPlayerController.dispose();
+          _chewieAudioController?.dispose();
         }
       },
-      child: Container(
-        key: AnchorKey.of(context.parser.key, this),
-        width: context.style.width ?? 300,
-        height:
-            Theme.of(context.buildContext).platform == TargetPlatform.android
-                ? 48
-                : 75,
-        child: ChewieAudio(controller: _chewieAudioController),
-      ),
+      child: _chewieAudioController != null
+          ? Container(
+              key: AnchorKey.of(context.parser.key, this),
+              width: context.style.width ?? 300,
+              height: Theme.of(context.buildContext).platform ==
+                      TargetPlatform.android
+                  ? 48
+                  : 75,
+              child: ChewieAudio(controller: _chewieAudioController!),
+            )
+          : const Card(child: Text('Audio error.')),
     );
   }
 }
@@ -214,7 +220,7 @@ class VideoContentElement extends ReplacedElement {
   final List<String>? domains;
   final String Function(String?)? mapUrl;
 
-  late ChewieController _chewieController;
+  late ChewieController? _chewieController;
   late String _src;
   late double aspectRatio;
 
@@ -237,21 +243,25 @@ class VideoContentElement extends ReplacedElement {
     final double _width = width ?? (height ?? 150) * 2;
     final double _height = height ?? (width ?? 300) / 2;
     aspectRatio = _width / _height;
-    _chewieController = ChewieController(
-      videoPlayerController:
-          networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
-              ? VideoPlayerController.network(_src,
-                  httpHeaders: this.headers ?? Map<String, String>())
-              : VideoPlayerController.network(_src),
-      placeholder: poster != null
-          ? Image.network(poster!)
-          : Container(color: Colors.black),
-      autoPlay: autoplay,
-      looping: loop,
-      showControls: showControls,
-      autoInitialize: true,
-      aspectRatio: aspectRatio,
-    );
+    try {
+      _chewieController = ChewieController(
+        videoPlayerController:
+            networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+                ? VideoPlayerController.network(_src,
+                    httpHeaders: this.headers ?? Map<String, String>())
+                : VideoPlayerController.network(_src),
+        placeholder: poster != null
+            ? Image.network(poster!)
+            : Container(color: Colors.black),
+        autoPlay: autoplay,
+        looping: loop,
+        showControls: showControls,
+        autoInitialize: true,
+        aspectRatio: aspectRatio,
+      );
+    } catch (e) {
+      debugPrint('VideoContentElement throw error : $e.');
+    }
   }
 
   @override
@@ -263,17 +273,19 @@ class VideoContentElement extends ReplacedElement {
       onVisibilityChanged: (visibilityInfo) {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose video widget ${visibilityInfo.key}.');
-          _chewieController.videoPlayerController.dispose();
-          _chewieController.dispose();
+          _chewieController?.videoPlayerController.dispose();
+          _chewieController?.dispose();
         }
       },
-      child: AspectRatio(
-        aspectRatio: aspectRatio,
-        child: Container(
-          key: AnchorKey.of(context.parser.key, this),
-          child: Chewie(controller: _chewieController),
-        ),
-      ),
+      child: _chewieController != null
+          ? AspectRatio(
+              aspectRatio: aspectRatio,
+              child: Container(
+                key: AnchorKey.of(context.parser.key, this),
+                child: Chewie(controller: _chewieController!),
+              ),
+            )
+          : const Card(child: Text('Video error.')),
     );
   }
 }
