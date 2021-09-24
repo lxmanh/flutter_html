@@ -15,10 +15,12 @@ import 'package:flutter_html/style.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:html/dom.dart' as dom;
+import 'package:slugify/slugify.dart';
 import 'package:video_player/video_player.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'media_request_options.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 /// A [ReplacedElement] is a type of [StyledElement] that does not require its [children] to be rendered.
 ///
@@ -143,6 +145,9 @@ class AudioContentElement extends ReplacedElement {
   final List<String>? domains;
   final String Function(String?)? mapUrl;
 
+  late ChewieAudioController _chewieAudioController;
+  late String _src;
+
   AudioContentElement({
     required String name,
     required this.src,
@@ -154,29 +159,42 @@ class AudioContentElement extends ReplacedElement {
     this.headers,
     this.domains,
     required dom.Element node,
-  }) : super(name: name, style: Style(), node: node, elementId: node.id);
+  }) : super(name: name, style: Style(), node: node, elementId: node.id) {
+    _src = mapUrl?.call(src.first) ?? src.first!;
+    _chewieAudioController = ChewieAudioController(
+      videoPlayerController:
+          networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+              ? VideoPlayerController.network(_src,
+                  httpHeaders: this.headers ?? Map<String, String>())
+              : VideoPlayerController.network(_src),
+      autoPlay: autoplay,
+      looping: loop,
+      showControls: showControls,
+      autoInitialize: true,
+    );
+  }
 
   @override
   Widget toWidget(RenderContext context) {
-    final String? _src = mapUrl?.call(src.first) ?? src.first!;
-    return Container(
-      key: AnchorKey.of(context.parser.key, this),
-      width: context.style.width ?? 300,
-      height: Theme.of(context.buildContext).platform == TargetPlatform.android
-          ? 48
-          : 75,
-      child: ChewieAudio(
-        controller: ChewieAudioController(
-          videoPlayerController:
-              networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
-                  ? VideoPlayerController.network(_src ?? "",
-                      httpHeaders: this.headers ?? Map<String, String>())
-                  : VideoPlayerController.network(_src ?? ""),
-          autoPlay: autoplay,
-          looping: loop,
-          showControls: showControls,
-          autoInitialize: true,
-        ),
+    final slugKey = slugify(_src);
+    return VisibilityDetector(
+      key: AnchorKey.of(context.parser.key, this) ??
+          Key('audio-widget-key-$slugKey'), //Key('my-widget-key'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction < 1) {
+          debugPrint('Dispose audio widget ${visibilityInfo.key}.');
+          _chewieAudioController.videoPlayerController.dispose();
+          _chewieAudioController.dispose();
+        }
+      },
+      child: Container(
+        key: AnchorKey.of(context.parser.key, this),
+        width: context.style.width ?? 300,
+        height:
+            Theme.of(context.buildContext).platform == TargetPlatform.android
+                ? 48
+                : 75,
+        child: ChewieAudio(controller: _chewieAudioController),
       ),
     );
   }
@@ -196,6 +214,10 @@ class VideoContentElement extends ReplacedElement {
   final List<String>? domains;
   final String Function(String?)? mapUrl;
 
+  late ChewieController _chewieController;
+  late String _src;
+  late double aspectRatio;
+
   VideoContentElement({
     required String name,
     required this.src,
@@ -210,33 +232,46 @@ class VideoContentElement extends ReplacedElement {
     this.headers,
     this.domains,
     required dom.Element node,
-  }) : super(name: name, style: Style(), node: node, elementId: node.id);
+  }) : super(name: name, style: Style(), node: node, elementId: node.id) {
+    _src = mapUrl?.call(src.first) ?? src.first!;
+    final double _width = width ?? (height ?? 150) * 2;
+    final double _height = height ?? (width ?? 300) / 2;
+    aspectRatio = _width / _height;
+    _chewieController = ChewieController(
+      videoPlayerController:
+          networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
+              ? VideoPlayerController.network(_src,
+                  httpHeaders: this.headers ?? Map<String, String>())
+              : VideoPlayerController.network(_src),
+      placeholder: poster != null
+          ? Image.network(poster!)
+          : Container(color: Colors.black),
+      autoPlay: autoplay,
+      looping: loop,
+      showControls: showControls,
+      autoInitialize: true,
+      aspectRatio: aspectRatio,
+    );
+  }
 
   @override
   Widget toWidget(RenderContext context) {
-    final String? _src = mapUrl?.call(src.first) ?? src.first!;
-    final double _width = width ?? (height ?? 150) * 2;
-    final double _height = height ?? (width ?? 300) / 2;
-    return AspectRatio(
-      aspectRatio: _width / _height,
-      child: Container(
-        key: AnchorKey.of(context.parser.key, this),
-        child: Chewie(
-          controller: ChewieController(
-            videoPlayerController:
-                networkMediaSourceMatcher(domains: this.domains, srcValue: _src)
-                    ? VideoPlayerController.network(_src ?? "",
-                        httpHeaders: this.headers ?? Map<String, String>())
-                    : VideoPlayerController.network(_src ?? ""),
-            placeholder: poster != null
-                ? Image.network(poster!)
-                : Container(color: Colors.black),
-            autoPlay: autoplay,
-            looping: loop,
-            showControls: showControls,
-            autoInitialize: true,
-            aspectRatio: _width / _height,
-          ),
+    final slugKey = slugify(_src);
+    return VisibilityDetector(
+      key: AnchorKey.of(context.parser.key, this) ??
+          Key('audio-widget-key-$slugKey'), //Key('my-widget-key'),
+      onVisibilityChanged: (visibilityInfo) {
+        if (visibilityInfo.visibleFraction < 1) {
+          debugPrint('Dispose video widget ${visibilityInfo.key}.');
+          _chewieController.videoPlayerController.dispose();
+          _chewieController.dispose();
+        }
+      },
+      child: AspectRatio(
+        aspectRatio: aspectRatio,
+        child: Container(
+          key: AnchorKey.of(context.parser.key, this),
+          child: Chewie(controller: _chewieController),
         ),
       ),
     );
