@@ -188,7 +188,7 @@ class AudioContentElement extends ReplacedElement {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose audio widget ${visibilityInfo.key}.');
           _chewieAudioController?.videoPlayerController.dispose();
-          _chewieAudioController?.dispose();
+          // _chewieAudioController?.dispose();
         }
       },
       child: _chewieAudioController != null
@@ -274,7 +274,7 @@ class VideoContentElement extends ReplacedElement {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose video widget ${visibilityInfo.key}.');
           _chewieController?.videoPlayerController.dispose();
-          _chewieController?.dispose();
+          // _chewieController?.dispose();
         }
       },
       child: _chewieController != null
