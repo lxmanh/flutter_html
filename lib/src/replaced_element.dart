@@ -1,7 +1,7 @@
 /// @Author: Your name
 /// @Date:   2021-09-23 14:25:44
 /// @Last Modified by:   Your name
-/// @Last Modified time: 2021-10-01 12:44:35
+/// @Last Modified time: 2021-10-01 12:52:01
 
 import 'dart:math';
 
@@ -193,7 +193,9 @@ class AudioContentElement extends ReplacedElement {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose audio widget ${visibilityInfo.key}.');
           // _chewieAudioController?.videoPlayerController.pause();
-          _chewieAudioController?.pause();
+          if (_chewieAudioController != null &&
+              _chewieAudioController!.isPlaying)
+            _chewieAudioController!.pause();
         }
       },
       child: _chewieAudioController != null
@@ -278,8 +280,8 @@ class VideoContentElement extends ReplacedElement {
       onVisibilityChanged: (visibilityInfo) {
         if (visibilityInfo.visibleFraction < 1) {
           debugPrint('Dispose video widget ${visibilityInfo.key}.');
-          // _chewieController?.videoPlayerController.pause();
-          _chewieController?.pause();
+          if (_chewieController != null && _chewieController!.isPlaying)
+            _chewieController!.pause();
         }
       },
       child: _chewieController != null
