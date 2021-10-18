@@ -1,7 +1,7 @@
 /// @Author: Your name
 /// @Date:   2021-09-23 14:25:44
 /// @Last Modified by:   Your name
-/// @Last Modified time: 2021-10-01 12:52:01
+/// @Last Modified time: 2021-10-01 13:02:53
 
 import 'dart:math';
 
@@ -177,6 +177,7 @@ class AudioContentElement extends ReplacedElement {
         looping: loop,
         showControls: showControls,
         autoInitialize: true,
+        // errorBuilder: (context, error) => Text(error!),
       );
     } catch (e) {
       debugPrint('AudioContentElement throw error : $e.');
@@ -265,6 +266,7 @@ class VideoContentElement extends ReplacedElement {
         showControls: showControls,
         autoInitialize: true,
         aspectRatio: aspectRatio,
+        // errorBuilder: (context, error) => Text(error),
       );
     } catch (e) {
       debugPrint('VideoContentElement throw error : $e.');
